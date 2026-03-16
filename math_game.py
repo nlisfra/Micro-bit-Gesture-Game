@@ -14,11 +14,11 @@ DIVISION_BG_IMG = "assets/foods/dapur.jpg"
 MULTIPLICATION_BG_IMG = "assets/toys/ruangan.jpg"
 MATH_TITLE_IMG = "assets/math_title.png"
 TROPHY_IMG = "assets/trophy.png"
-BGKU_IMG = "assets/bgkurang.jpg"
+BGKU_IMG = "assets/bgkurang.jpg" 
 
 GIRAFFE_IMG = "assets/animals/giraffe.png"
 BEAR_IMG = "assets/animals/bear.png"
-ELEPHANT_IMG = "assets/animals/elephant.png"
+ELEPHANT_IMG = "assets/animals/gajah.png"
 RABBIT_IMG = "assets/animals/rabbit.png"
 BUAYA_IMG = "assets/animals/buaya.png"
 
@@ -28,7 +28,7 @@ PIZZA_IMG = "assets/foods/pizza.png"
 FISH_IMG = "assets/foods/fish.png"
 DONUT_IMG = "assets/foods/donut.png"
 PLATE_IMG = "assets/foods/plate.png"
-WADAH_IMG = "assets/foods/wadah.png"
+WADAH_IMG = "assets/foods/wadah.jpg"  
 
 BALL_IMG = "assets/toys/ball.png"
 CAR_IMG = "assets/toys/car.png"
@@ -37,7 +37,7 @@ BLOCK_IMG = "assets/toys/block.png"
 ROBOT_IMG = "assets/toys/robot.png"
 RAK_IMG = "assets/toys/rak.jpg"
 KARDUS_IMG = "assets/toys/kardus.jpg"
-HOME_IMG = "assets/home.png"
+HOME_IMG = "assets/home.png"       
 
 TUT_ICON_BACA     = "assets/baca.png"
 TUT_ICON_OBJECT   = "assets/object.png"
@@ -71,7 +71,7 @@ SCORE_PER_CORRECT = 10
 BLOCK_SIZE = (220, 130)
 ANSWER_Y = 450
 ANSWER_XS = [400, 800, 1200]
-OBJECTS_AREA_Y = 750
+OBJECTS_AREA_Y = 720
 OBJECTS_AREA_HEIGHT = 200
 OBJECTS_BOTTOM = OBJECTS_AREA_Y + OBJECTS_AREA_HEIGHT
 GROUND_LINE = OBJECTS_BOTTOM
@@ -190,10 +190,15 @@ def load_image_safe(path, size=None):
         try:
             img = pygame.image.load(path).convert_alpha()
         except Exception:
-            img = pygame.image.load(path)
+            try:
+                img = pygame.image.load(path)
+            except Exception as e:
+                print(f"⚠️ Gagal load gambar: {path} → {e}")
+                return None
         if size:
             img = pygame.transform.smoothscale(img, size)
         return img
+    print(f"❌ File tidak ditemukan: {path}")
     return None
 
 def load_font_try(names_sizes):
@@ -326,8 +331,9 @@ class MultiplicationGroup:
         for i in range(self.current_items):
             col = i % cols
             row = i // cols
-            item = pygame.transform.smoothscale(self.item_img, (45, 45))
-            base.blit(item, (start_x + col * spacing_x, start_y + row * spacing_y))
+            if self.item_img:
+                item = pygame.transform.smoothscale(self.item_img, (45, 45))
+                base.blit(item, (start_x + col * spacing_x, start_y + row * spacing_y))
         scaled = pygame.transform.smoothscale(
             base, (int(self.width * self.scale), int(self.height * self.scale))
         )
@@ -383,7 +389,6 @@ class OperationCard:
             self.base_rect.centery - h // 2,
             w, h
         )
-
 
 class MathGame:
     def __init__(self):
@@ -721,12 +726,18 @@ class MathGame:
             x = spacing_x * (self.spawned_total + 1)
             y = OBJECTS_AREA_Y + 40
             item_map = {
-                "ball": self.ball_img, "car": self.car_img,
-                "doll": self.doll_img, "block": self.block_img, "robot": self.robot_img,
+                "ball":  self.ball_img,
+                "car":   self.car_img,
+                "doll":  self.doll_img,
+                "block": self.block_img,
+                "robot": self.robot_img,
             }
             container_map = {
-                "ball": self.rak_img, "car": self.kardus_img,
-                "doll": self.rak_img, "block": self.rak_img, "robot": self.rak_img,
+                "ball":  self.rak_img,
+                "car":   self.kardus_img,
+                "doll":  self.rak_img,
+                "block": self.rak_img,
+                "robot": self.rak_img,
             }
             item_img      = item_map.get(self.object_type)
             container_img = container_map.get(self.object_type) or self.rak_img
@@ -739,17 +750,26 @@ class MathGame:
             print(f"📦 Rak muncul: {self.spawned_total}/{self.total_groups}")
             return True
 
+        # ✅ FIX: Tambahkan "gajah" sebagai alias untuk elephant
         img_map = {
-            "giraffe": self.giraffe_img, "bear": self.bear_img,
-            "elephant": self.elephant_img, "rabbit": self.rabbit_img,
-            "buaya": self.buaya_img, "apple": self.apple_img,
-            "banana": self.banana_img, "pizza": self.pizza_img,
-            "fish": self.fish_img, "donut": self.donut_img,
+            "giraffe":  self.giraffe_img,
+            "bear":     self.bear_img,
+            "elephant": self.elephant_img,
+            "gajah":    self.elephant_img,   # ✅ FIX
+            "rabbit":   self.rabbit_img,
+            "buaya":    self.buaya_img,
+            "apple":    self.apple_img,
+            "banana":   self.banana_img,
+            "pizza":    self.pizza_img,
+            "fish":     self.fish_img,
+            "donut":    self.donut_img,
         }
         if not self.spawn_queue:
             return False
         obj_type        = self.spawn_queue.pop(0)
         img             = img_map.get(obj_type)
+        if img is None:
+            print(f"⚠️ Gambar tidak ditemukan untuk tipe: {obj_type}")
         total_on_screen = len(self.objects_on_screen)
         max_per_row     = 8
         total_rows      = (self.total_target + max_per_row - 1) // max_per_row

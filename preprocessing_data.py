@@ -5,286 +5,306 @@ import os
 import pickle
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import warnings
+warnings.filterwarnings('ignore')
 
-class DataPreprocessor:
+
+class PreprocessingData:
     def __init__(self):
         self.scaler = StandardScaler()
-        
-    def load_all_data(self, data_folder='./'):
-        csv_files = glob.glob(os.path.join(data_folder, 'data_*.csv'))
-        
+        self.label_map = {"tilt_left": 0, "up": 1, "tilt_right": 2}
+        self.reverse_label_map = {0: "tilt_left", 1: "up", 2: "tilt_right"}
+        self.colors = {
+            "tilt_left": "#FF4B4B",
+            "tilt_right": "#4CAF50", 
+            "up": "#2196F3"
+        }
+        self.N_FEATURES = 15
+
+    def load_all_data(self, data_folder="./"):
+        csv_files = glob.glob(os.path.join(data_folder, "data_*.csv"))
         if not csv_files:
-            raise FileNotFoundError("Tidak ada file data_*.csv ditemukan!")
-        
-        print(f"📂 Ditemukan {len(csv_files)} file data\n")
-        
+            raise FileNotFoundError(f"Tidak ada file data_*.csv ditemukan")
+
+        print(f"\n{'='*50}")
+        print("LOAD DATA")
+        print('='*50)
+        print(f"File ditemukan: {len(csv_files)}")
+
         df_list = []
+        stats = {"tilt_left": 0, "up": 0, "tilt_right": 0}
+
         for file in csv_files:
-            print(f"Processing: {os.path.basename(file)}")
-            
+            fname = os.path.basename(file)
             df = None
-            
-            # Try 1: Tab separator with skiprows
-            try:
-                df = pd.read_csv(file, sep='\t', skiprows=1, on_bad_lines='skip')
-                if len(df.columns) >= 3:
-                    print(f"      ✅ Read with tab separator")
-            except:
-                pass
-            
-            # Try 2: Semicolon separator
-            if df is None or len(df.columns) < 3:
+
+            # Coba separator berbeda untuk membaca CSV
+            for sep in ["\t", ";", ","]:
                 try:
-                    df = pd.read_csv(file, sep=';', on_bad_lines='skip')
-                    if len(df.columns) >= 3:
-                        print(f"      ✅ Read with semicolon separator")
+                    tmp = pd.read_csv(file, sep=sep, on_bad_lines='skip')
+                    if len(tmp.columns) >= 3:
+                        df = tmp
+                        break
                 except:
-                    pass
-            
-            # Try 3: Comma separator
-            if df is None or len(df.columns) < 3:
-                try:
-                    df = pd.read_csv(file, sep=',', on_bad_lines='skip')
-                    if len(df.columns) >= 3:
-                        print(f"      ✅ Read with comma separator")
-                except:
-                    pass
-            
-            if df is None or len(df.columns) < 3:
-                print(f"      ❌ Could not read file properly, skipping")
-                continue
-            
-            if 'data.0' in df.columns:
-                df = df.rename(columns={
-                    'data.0': 'ax',
-                    'data.1': 'ay', 
-                    'data.2': 'az'
-                })
-            else:
-                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-                
-                if len(numeric_cols) >= 3:
-                    df = df[numeric_cols[:3]]
-                    df.columns = ['ax', 'ay', 'az']
-                elif len(df.columns) >= 3:
-                    df = df.iloc[:, :3]
-                    df.columns = ['ax', 'ay', 'az']
-                else:
-                    print(f"      ❌ Not enough columns, skipping")
                     continue
-            
-            if 'ax' not in df.columns or 'ay' not in df.columns or 'az' not in df.columns:
-                print(f"      ❌ Missing ax/ay/az after processing, skipping")
+
+            if df is None or len(df.columns) < 3:
+                print(f"  ✗ {fname} - format salah")
                 continue
-            
-            filename = os.path.basename(file).lower()
-            if 'tilt_left' in filename or '_left' in filename or 'left' in filename:
-                label = 'tilt_left'
-            elif 'tilt_right' in filename or '_right' in filename or 'right' in filename:
-                label = 'tilt_right'
-            elif 'up' in filename or 'atas' in filename:
-                label = 'up'
+
+            if "data.0" in df.columns:
+                df = df.rename(columns={"data.0": "ax", "data.1": "ay", "data.2": "az"})
+                df = df[["ax", "ay", "az"]]
+            elif all(col in df.columns for col in ["ax", "ay", "az"]):
+                df = df[["ax", "ay", "az"]]
             else:
-                print(f"    Unknown gesture in filename: {filename}")
-                continue
-            
-            df['label'] = label
-            
-            df = df[['ax', 'ay', 'az', 'label']].dropna()
-            
-            df['ax'] = pd.to_numeric(df['ax'], errors='coerce')
-            df['ay'] = pd.to_numeric(df['ay'], errors='coerce')
-            df['az'] = pd.to_numeric(df['az'], errors='coerce')
+                df = df.iloc[:, -3:]
+                df.columns = ["ax", "ay", "az"]
+
+            for col in ["ax", "ay", "az"]:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
             df = df.dropna()
             
-            print(f"Final: {len(df)} rows, label='{label}'\n")
-            
+            if len(df) < 10:
+                print(f"  ✗ {fname} - data terlalu sedikit ({len(df)} baris)")
+                continue
+
+            name = fname.lower()
+            if "left" in name:
+                label = "tilt_left"
+            elif "right" in name:
+                label = "tilt_right"
+            elif "up" in name or "atas" in name:
+                label = "up"
+            else:
+                print(f"  ✗ {fname} - label tidak dikenal")
+                continue
+
+            df["label"] = label
+            stats[label] += len(df)
+            print(f"  ✓ {fname:<20} {len(df):4d} baris ({label})")
             df_list.append(df)
-        
+
         if not df_list:
-            raise ValueError("No valid data loaded from any CSV file!")
+            raise ValueError("Tidak ada data valid!")
+
+        combined = pd.concat(df_list, ignore_index=True)
         
-        combined_df = pd.concat(df_list, ignore_index=True)
-        print(f" Total data: {len(combined_df)} rows")
-        print(f" Labels: {combined_df['label'].value_counts().to_dict()}\n")
-        
-        return combined_df
-    
+        print("-"*50)
+        print(f"Total data: {len(combined)} baris")
+        for label, count in stats.items():
+            print(f"  {label:<11}: {count} baris ({count/len(combined)*100:.1f}%)")
+
+        return combined
+
     def clean_data(self, df):
-        print("\n Cleaning data...")
+        print("\n" + "="*50)
+        print("CLEANING DATA")
+        print("="*50)
         
-        before = len(df)
-        df = df.dropna()
-        print(f"   - Missing values removed: {before - len(df)} rows")
+        awal = len(df)
+        df = df.drop_duplicates(subset=["ax", "ay", "az"])
+        print(f"Duplikat: {awal - len(df)} dihapus")
         
-        before = len(df)
-        df = df.drop_duplicates(subset=['ax', 'ay', 'az'])
-        print(f"   - Duplicates removed: {before - len(df)} rows")
-        
-        numeric_cols = ['ax', 'ay', 'az']
-        before = len(df)
-        
-        for col in numeric_cols:
+        for col in ["ax", "ay", "az"]:
             Q1 = df[col].quantile(0.25)
             Q3 = df[col].quantile(0.75)
             IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
+            df = df[(df[col] >= Q1 - 1.5*IQR) & (df[col] <= Q3 + 1.5*IQR)]
         
-        print(f"   - Outliers removed: {before - len(df)} rows")
-        print(f"   Clean data: {len(df)} rows\n")
+        print(f"Data akhir: {len(df)} baris")
+        return df.reset_index(drop=True)
+
+    def extract_features(self, window):
+        features = []
+        for axis in range(3):
+            col = window[:, axis]
+            features.extend([
+                np.mean(col), np.std(col), 
+                np.min(col), np.max(col),
+                np.max(col) - np.min(col)
+            ])
+        return np.array(features)
+
+    def create_windows(self, df, window_size=50, step_size=25):
+        print("\n" + "="*50)
+        print("WINDOWING")
+        print("="*50)
+        print(f"Window size: {window_size}, Step: {step_size}")
         
-        return df
-    
-    def visualize_data(self, df):
-        print("Membuat visualisasi data...")
+        X, y = [], []
         
-        #Scatter plot 2D dan box plot
-        fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-        
-        df['label'].value_counts().plot(kind='bar', ax=axes[0, 0], color='skyblue')
-        axes[0, 0].set_title('Distribusi Data per Gesture')
-        axes[0, 0].set_ylabel('Jumlah Sampel')
-        axes[0, 0].grid(True, alpha=0.3)
-        
-        for label in df['label'].unique():
-            subset = df[df['label'] == label]
-            axes[0, 1].scatter(subset['ax'], subset['ay'], label=label, alpha=0.5)
-        axes[0, 1].set_xlabel('Acceleration X')
-        axes[0, 1].set_ylabel('Acceleration Y')
-        axes[0, 1].set_title('Scatter Plot: AX vs AY')
-        axes[0, 1].legend()
-        axes[0, 1].grid(True, alpha=0.3)
-        
-        for label in df['label'].unique():
-            subset = df[df['label'] == label]
-            axes[1, 0].scatter(subset['ax'], subset['az'], label=label, alpha=0.5)
-        axes[1, 0].set_xlabel('Acceleration X')
-        axes[1, 0].set_ylabel('Acceleration Z')
-        axes[1, 0].set_title('Scatter Plot: AX vs AZ')
-        axes[1, 0].legend()
-        axes[1, 0].grid(True, alpha=0.3)
-        
-        df_melted = df.melt(id_vars='label', value_vars=['ax', 'ay', 'az'], 
-                           var_name='axis', value_name='value')
-        df_melted.boxplot(column='value', by=['label', 'axis'], ax=axes[1, 1])
-        axes[1, 1].set_title('Box Plot Distribusi Nilai')
-        axes[1, 1].set_xlabel('Gesture & Axis')
-        axes[1, 1].set_ylabel('Acceleration Value')
-        
-        plt.tight_layout()
-        plt.savefig('data_visualization.png', dpi=300)
-        print("Visualisasi disimpan: data_visualization.png")
-        plt.close()
-        
-        # Scatter plot 3D
-        fig = plt.figure(figsize=(12, 9))
-        ax = fig.add_subplot(111, projection='3d')
-        
-        colors = {'tilt_left': 'red', 'up': 'green', 'tilt_right': 'blue'}
-        
-        for label in df['label'].unique():
-            subset = df[df['label'] == label]
-            ax.scatter(subset['ax'], subset['ay'], subset['az'], 
-                      c=colors.get(label, 'gray'), 
-                      label=label, 
-                      alpha=0.6, 
-                      s=20)
-        
-        ax.set_xlabel('Acceleration X', fontsize=10)
-        ax.set_ylabel('Acceleration Y', fontsize=10)
-        ax.set_zlabel('Acceleration Z', fontsize=10)
-        ax.set_title('Distribusi Scatter Plot Data Akselerometer 3D', fontsize=12, fontweight='bold')
-        ax.legend(loc='upper right')
-        ax.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        plt.savefig('data_visualization_3d.png', dpi=300)
-        print("Visualisasi 3D disimpan: data_visualization_3d.png\n")
-        plt.close()
-    
-    def prepare_features(self, df):
-        print("Preparing features...")
-        
-        X = df[['ax', 'ay', 'az']].values
-        y = df['label'].values
-        
-        label_map = {'tilt_left': 0, 'up': 1, 'tilt_right': 2}
-        y_encoded = np.array([label_map[label] for label in y])
-        
-        print(f"   - Features shape: {X.shape}")
-        print(f"   - Labels shape: {y_encoded.shape}")
-        print(f"   - Label mapping: {label_map}\n")
-        
-        return X, y_encoded, label_map
-    
+        for label in df["label"].unique():
+            sub = df[df["label"] == label].reset_index(drop=True)
+            data = sub[["ax", "ay", "az"]].values
+            label_code = self.label_map[label]
+            
+            for start in range(0, len(data) - window_size + 1, step_size):
+                window = data[start:start+window_size]
+                X.append(self.extract_features(window))
+                y.append(label_code)
+            
+            print(f"  {label:<11}: {len(X) - len(y) + 1} windows")
+
+        X = np.array(X)
+        y = np.array(y)
+        print(f"\nTotal windows: {len(X)}")
+        return X, y
+
     def normalize_features(self, X_train, X_test):
-        print("🔄 Normalizing features...")
+        print("\n" + "="*50)
+        print("NORMALISASI")
+        print("="*50)
         
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
         
-        print(f"   ✅ Training set scaled: {X_train_scaled.shape}")
-        print(f"   ✅ Test set scaled: {X_test_scaled.shape}\n")
-        
+        print(f"Mean setelah normalisasi: {np.mean(X_train_scaled):.3f}")
+        print(f"Std setelah normalisasi : {np.std(X_train_scaled):.3f}")
         return X_train_scaled, X_test_scaled
-    
-    def process_pipeline(self, data_folder='./', test_size=0.2, visualize=True):
-        print("\n" + "="*50)
-        print(" PREPROCESSING DATA ")
-        print("="*50 + "\n")
+
+    def plot_bar_distribution(self, df, filename="bar_distribution.png"):
+        counts = df["label"].value_counts()
         
+        plt.figure(figsize=(8, 5))
+        bars = plt.bar(counts.index, counts.values, 
+                      color=[self.colors[l] for l in counts.index])
+        
+        for bar in bars:
+            plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 5,
+                    f'{int(bar.get_height())}', ha='center', va='bottom')
+        
+        plt.xlabel('Gestur')
+        plt.ylabel('Jumlah Sampel')
+        plt.title('Distribusi Data per Gestur')
+        plt.grid(True, alpha=0.3, axis='y')
+        plt.tight_layout()
+        plt.savefig(filename, dpi=300)
+        plt.close()
+        print(f"✓ {filename} saved")
+
+    # Plot 2D scatter
+    def plot_2d_distribution(self, df, filename="scatter_2d.png"):
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        pairs = [("ax", "ay"), ("ax", "az"), ("ay", "az")]
+
+        for idx, (x, y) in enumerate(pairs):
+            for label, color in self.colors.items():
+                subset = df[df["label"] == label]
+                axes[idx].scatter(subset[x], subset[y], c=color, alpha=0.5, s=5)
+            
+            axes[idx].set_xlabel(f'{x} (g)')
+            axes[idx].set_ylabel(f'{y} (g)')
+            axes[idx].set_title(f'{x} vs {y}')
+            axes[idx].grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(filename, dpi=300)
+        plt.close()
+        print(f"✓ {filename} saved")
+
+    # Plot 3D scatter
+    def plot_3d_distribution(self, df, filename="scatter_3d.png"):
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+
+        for label, color in self.colors.items():
+            subset = df[df["label"] == label]
+            ax.scatter(subset["ax"], subset["ay"], subset["az"],
+                      c=color, label=label, alpha=0.4, s=3)
+
+        ax.set_xlabel('AX (g)')
+        ax.set_ylabel('AY (g)')
+        ax.set_zlabel('AZ (g)')
+        ax.set_title('Distribusi Data 3D')
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(filename, dpi=300)
+        plt.close()
+        print(f"✓ {filename} saved")
+
+    def process_pipeline(self, data_folder="./", test_size=0.2, 
+                        window_size=50, step_size=25, random_state=42):
+        print("\n" + "="*50)
+        print("PREPROCESSING DATA")
+        print("="*50)
+
+        # Load data
         df = self.load_all_data(data_folder)
         
-        df_clean = self.clean_data(df)
+        # Clean data
+        df = self.clean_data(df)
         
-        if visualize:
-            self.visualize_data(df_clean)
-        
-        X, y, label_map = self.prepare_features(df_clean)
+        # Windowing
+        X_all, y_all = self.create_windows(df, window_size, step_size)
         
         # Split data
-        print("Splitting data...")
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
+            X_all, y_all, test_size=test_size, 
+            random_state=random_state, stratify=y_all
         )
-        print(f"   - Train set: {len(X_train)} samples")
-        print(f"   - Test set: {len(X_test)} samples\n")
         
+        print("\n" + "="*50)
+        print("SPLIT DATA")
+        print("="*50)
+        print(f"Train: {len(X_train)} windows ({len(X_train)/len(X_all)*100:.1f}%)")
+        print(f"Test : {len(X_test)} windows ({len(X_test)/len(X_all)*100:.1f}%)")
+        
+        # Normalisasi
         X_train_scaled, X_test_scaled = self.normalize_features(X_train, X_test)
         
-        print("Menyimpan data hasil preprocessing...")
-        np.savez('preprocessed_data.npz',
-                X_train=X_train_scaled,
-                X_test=X_test_scaled,
-                y_train=y_train,
-                y_test=y_test,
-                label_map=label_map)
-        print("Saved: preprocessed_data.npz")
+        # Visualisasi
+        print("\n" + "="*50)
+        print("VISUALISASI")
+        print("="*50)
+        self.plot_bar_distribution(df)
+        self.plot_2d_distribution(df)
+        self.plot_3d_distribution(df)
         
-        with open('scaler.pkl', 'wb') as f:
+        np.savez_compressed("preprocessed_data.npz",
+            X_train=X_train_scaled, X_test=X_test_scaled,
+            y_train=y_train, y_test=y_test,
+            label_map=self.label_map
+        )
+        
+        with open("scaler.pkl", "wb") as f:
             pickle.dump(self.scaler, f)
-        print("Saved: scaler.pkl \n")
         
+        print("\n" + "="*50)
+        print("PREPROCESSING SELESAI")
         print("="*50)
-        print("PREPROCESSING SELESAI!")
-        print("="*50)
-        
-        return X_train_scaled, X_test_scaled, y_train, y_test, label_map
+        print("\nFile output:")
+        print("  - preprocessed_data.npz")
+        print("  - scaler.pkl")
+        print("  - bar_distribution.png")
+        print("  - scatter_2d.png")
+        print("  - scatter_3d.png")
+
+        return X_train_scaled, X_test_scaled, y_train, y_test, self.label_map
+
 
 if __name__ == "__main__":
-    processor = DataPreprocessor()
+    processor = PreprocessingData()
+    
     X_train, X_test, y_train, y_test, label_map = processor.process_pipeline(
-        data_folder='./',
+        data_folder="./",
         test_size=0.2,
-        visualize=True
+        window_size=50,
+        step_size=25,
+        random_state=42
     )
     
-    print("\n Summary:")
-    print(f"   Training samples: {len(X_train)}")
-    print(f"   Testing samples: {len(X_test)}")
-    print(f"   Features: {X_train.shape[1]}")
-    print(f"   Classes: {len(label_map)}")
+    print("\n" + "="*50)
+    print("RINGKASAN")
+    print("="*50)
+    print(f"Fitur per sampel: {X_train.shape[1]} (15)")
+    print(f"Train samples   : {len(X_train)}")
+    print(f"Test samples    : {len(X_test)}")
+    print(f"Kelas           : {label_map}")
+    print("="*50)

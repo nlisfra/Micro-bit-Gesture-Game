@@ -40,18 +40,18 @@ DIVISION_QUESTIONS = [
         "operation": "division",
         "theme": "foods",
         "lines": [
-            "Ada 15 pisang matang.",
-            "Pisang dibagikan sama rata ke 5 piring.",
+            "Ada 6 pisang matang.",
+            "Pisang dibagikan sama rata ke 3 piring.",
             "Berapa pisang di setiap piring?"
         ],
         "spawn_per_line": [
-            [{"type": "banana", "count": 15}],
+            [{"type": "banana", "count": 6}],
             [],
             []
         ],
-        "divisor": 5,
-        "answer": 3,
-        "wrong_answers": [2, 5]
+        "divisor": 3,
+        "answer": 2,
+        "wrong_answers": [1, 3]
     },
 
     {
@@ -76,18 +76,18 @@ DIVISION_QUESTIONS = [
         "operation": "division",
         "theme": "foods",
         "lines": [
-            "Ada 9 ikan segar.",
+            "Ada 3 ikan segar.",
             "Ikan dibagikan sama rata ke 3 keranjang.",
             "Berapa ikan di setiap keranjang?"
         ],
         "spawn_per_line": [
-            [{"type": "fish", "count": 9}],
+            [{"type": "fish", "count": 3}],
             [],
             []
         ],
         "divisor": 3,
-        "answer": 3,
-        "wrong_answers": [2, 4]
+        "answer": 1,
+        "wrong_answers": [2, 3]
     },
 
     {
@@ -112,16 +112,16 @@ DIVISION_QUESTIONS = [
         "operation": "division",
         "theme": "foods",
         "lines": [
-            "Ada 14 apel merah.",
-            "Apel dibagikan sama rata ke 7 piring.",
+            "Ada 12 apel merah.",
+            "Apel dibagikan sama rata ke 6 piring.",
             "Berapa apel di setiap piring?"
         ],
         "spawn_per_line": [
-            [{"type": "apple", "count": 14}],
+            [{"type": "apple", "count": 12}],
             [],
             []
         ],
-        "divisor": 7,
+        "divisor": 6,
         "answer": 2,
         "wrong_answers": [3, 4]
     },
@@ -148,16 +148,16 @@ DIVISION_QUESTIONS = [
         "operation": "division",
         "theme": "foods",
         "lines": [
-            "Ada 12 pisang segar.",
-            "Pisang dibagikan sama rata ke 4 piring.",
+            "Ada 6 pisang segar.",
+            "Pisang dibagikan sama rata ke 2 piring.",
             "Berapa pisang di setiap piring?"
         ],
         "spawn_per_line": [
-            [{"type": "banana", "count": 12}],
+            [{"type": "banana", "count": 6}],
             [],
             []
         ],
-        "divisor": 4,
+        "divisor": 2,
         "answer": 3,
         "wrong_answers": [2, 4]
     },

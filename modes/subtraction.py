@@ -21,25 +21,8 @@ SUBTRACTION_QUESTIONS = [
         "operation": "subtraction",
         "theme": "animals",
         "lines": [
-            "Ada dua jerapah tinggi.",
-            "Satu jerapah berjalan pergi.",
-            "Berapa jerapah yang masih berdiri?"
-        ],
-        "spawn_per_line": [
-            [{"type": "giraffe", "count": 2}],
-            [],
-            []
-        ],
-        "answer": 1,
-        "wrong_answers": [0, 2]
-    },
-
-    {
-        "operation": "subtraction",
-        "theme": "animals",
-        "lines": [
             "Ada tujuh beruang bermain air.",
-            "Tiga beruang pergi tidur.",
+            "Tiga beruang pergi tidur ke kandang.",
             "Berapa beruang yang masih bermain?"
         ],
         "spawn_per_line": [
@@ -55,7 +38,7 @@ SUBTRACTION_QUESTIONS = [
         "operation": "subtraction",
         "theme": "animals",
         "lines": [
-            "Ada delapan jerapah tinggi.",
+            "Ada delapan jerapah tinggi di padang.",
             "Dua jerapah pergi ke tempat minum.",
             "Berapa jerapah yang masih berdiri?"
         ],
@@ -72,17 +55,17 @@ SUBTRACTION_QUESTIONS = [
         "operation": "subtraction",
         "theme": "animals",
         "lines": [
-            "Ada delapan kelinci melompat.",
-            "Empat kelinci bersembunyi.",
+            "Ada sembilan kelinci melompat riang.",
+            "Empat kelinci bersembunyi di semak.",
             "Berapa kelinci yang masih terlihat?"
         ],
         "spawn_per_line": [
-            [{"type": "rabbit", "count": 8}],
+            [{"type": "rabbit", "count": 9}],
             [],
             []
         ],
-        "answer": 4,
-        "wrong_answers": [3, 5]
+        "answer": 5,
+        "wrong_answers": [4, 6]
     },
 
     {
@@ -94,7 +77,7 @@ SUBTRACTION_QUESTIONS = [
             "Berapa gajah yang masih di kolam?"
         ],
         "spawn_per_line": [
-            [{"type": "elephant", "count": 10}],
+            [{"type": "gajah", "count": 10}],
             [],
             []
         ],
@@ -106,34 +89,34 @@ SUBTRACTION_QUESTIONS = [
         "operation": "subtraction",
         "theme": "animals",
         "lines": [
-            "Ada sepuluh buaya berjemur.",
-            "Dua buaya masuk ke air.",
+            "Ada dua belas buaya berjemur di tepi sungai.",
+            "Empat buaya masuk ke dalam air.",
             "Berapa buaya yang masih berjemur?"
         ],
         "spawn_per_line": [
-            [{"type": "buaya", "count": 10}],
+            [{"type": "buaya", "count": 12}],
             [],
             []
         ],
         "answer": 8,
-        "wrong_answers": [6, 9]
+        "wrong_answers": [7, 9]
     },
 
     {
         "operation": "subtraction",
         "theme": "animals",
         "lines": [
-            "Ada lima belas kelinci bermain.",
-            "Sembilan kelinci bersembunyi.",
-            "Berapa kelinci yang masih terlihat?"
+            "Ada lima belas kelinci di lapangan luas.",
+            "Enam kelinci berlari masuk ke kandang.",
+            "Berapa kelinci yang masih di lapangan?"
         ],
         "spawn_per_line": [
             [{"type": "rabbit", "count": 15}],
             [],
             []
         ],
-        "answer": 6,
-        "wrong_answers": [5, 8]
+        "answer": 9,
+        "wrong_answers": [8, 10]
     },
 
     {
@@ -141,7 +124,7 @@ SUBTRACTION_QUESTIONS = [
         "theme": "animals",
         "lines": [
             "Ada delapan belas beruang di hutan mini.",
-            "Tujuh beruang pergi ke sungai.",
+            "Delapan beruang pergi ke sungai.",
             "Berapa beruang yang masih di hutan?"
         ],
         "spawn_per_line": [
@@ -149,26 +132,43 @@ SUBTRACTION_QUESTIONS = [
             [],
             []
         ],
-        "answer": 11,
-        "wrong_answers": [10, 12]
+        "answer": 10,
+        "wrong_answers": [9, 11]
     },
 
     {
         "operation": "subtraction",
         "theme": "animals",
         "lines": [
-            "Ada dua puluh satu gajah besar.",
-            "Tujuh gajah pindah ke kandang lain.",
-            "Berapa gajah yang masih tersisa?"
+            "Ada dua puluh jerapah di sabana luas.",
+            "Tujuh jerapah berjalan pergi ke danau.",
+            "Berapa jerapah yang masih di sabana?"
         ],
         "spawn_per_line": [
-            [{"type": "elephant", "count": 21}],
+            [{"type": "giraffe", "count": 20}],
             [],
             []
         ],
-        "answer": 14,
-        "wrong_answers": [13, 15]
+        "answer": 13,
+        "wrong_answers": [12, 14]
+    },
+
+    {
+        "operation": "subtraction",
+        "theme": "animals",
+        "lines": [
+            "Ada dua puluh lima gajah di padang rumput.",
+            "Sepuluh gajah pindah ke kandang besar.",
+            "Berapa gajah yang masih di padang?"
+        ],
+        "spawn_per_line": [
+            [{"type": "gajah", "count": 25}],
+            [],
+            []
+        ],
+        "answer": 15,
+        "wrong_answers": [13, 17]
     },
 ]
 
-__all__ = ['SUBTRACTION_QUESTIONS']
+__all__ = ["SUBTRACTION_QUESTIONS"]
